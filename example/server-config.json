@@ -1,0 +1,6 @@
+{
+  "host": "some-host",
+  "port": 1234,
+  "mode": "tcp6",
+  "timeout": 10
+}

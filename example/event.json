@@ -1,0 +1,16 @@
+{
+  "ttl": 90,
+  "host": "example-host",
+  "state": "test-state",
+  "service": "test-service",
+  "metric": 123.4,
+  "description": "test-desc",
+  "tags": [
+    "some-tag",
+    "some-other-tag"
+  ],
+  "attributes": {
+    "some-key": "some-value",
+    "some-other-key": "some-other-value"
+  }
+}
