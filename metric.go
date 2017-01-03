@@ -7,7 +7,27 @@ import (
 
 type Metric string
 
+func NewMetric(defaultValue interface{}) Metric {
+	if defaultValue == nil {
+		return Metric("")
+	} else {
+		switch defaultValue.(type) {
+		case int:
+			return Metric(fmt.Sprintf("%d", defaultValue))
+		case float32:
+			return Metric(fmt.Sprintf("%f", defaultValue))
+		case float64:
+			return Metric(fmt.Sprintf("%f", defaultValue))
+		default:
+			return Metric("")
+		}
+	}
+}
+
 func (n *Metric) Parse() (interface{}, error) {
+	if *n == "" {
+		return nil, nil
+	}
 	if i, err := strconv.ParseInt(n.String(), 10, 32); err == nil {
 		return i, nil
 	}
