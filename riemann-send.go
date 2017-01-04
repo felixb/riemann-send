@@ -2,16 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/amir/raidman"
-	"fmt"
-	"strings"
 )
 
 const (
@@ -93,6 +94,41 @@ func printEvent(event raidman.Event) {
 	}
 }
 
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func parseTags(event *raidman.Event, tags *string) {
+	if len(*tags) > 0 {
+		for _, t := range (strings.Split(*tags, ",")) {
+			if !contains(event.Tags, t) {
+				event.Tags = append(event.Tags, t)
+			}
+		}
+	}
+}
+
+func parseAttributes(event *raidman.Event, attributes *string) error {
+	if len(*attributes) > 0 {
+		if event.Attributes == nil {
+			event.Attributes = make(map[string]string)
+		}
+		for _, e := range strings.Split(*attributes, ",") {
+			kv := strings.SplitN(e, ":", 2)
+			if len(kv) != 2 {
+				return errors.New("Error parsing attributes, format: key:value[,key:value]...")
+			}
+			event.Attributes[kv[0]] = kv[1]
+		}
+	}
+	return nil
+}
+
 func parseArgs(serverConfig *ServerConfig, event *raidman.Event) {
 	// riemann server flags
 	riemannHost := flag.String("riemann-host", serverConfig.Host, "Riemann server")
@@ -127,13 +163,9 @@ func parseArgs(serverConfig *ServerConfig, event *raidman.Event) {
 	event.Time = *eventTime
 	event.Ttl = float32(*ttl)
 	event.Metric, _ = metric.Parse()
-	event.Tags = append(event.Tags, strings.Split(*tags, ",")...)
-	for _, e := range strings.Split(*attributes, ",") {
-		kv := strings.SplitN(e, ":", 2)
-		if len(kv) != 2 {
-			log.Panicf("Error parsing attributes, format: key:value[,key:value]...")
-		}
-		event.Attributes[kv[0]] = kv[1]
+	parseTags(event, tags)
+	if err := parseAttributes(event, attributes); err != nil {
+		log.Panicf(err.Error())
 	}
 
 	if *jsonFile != "" {
